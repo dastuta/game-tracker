@@ -12,6 +12,10 @@ Originally, I wanted to make a task tracking app that kept data in the browser's
 
 Using Service Workers, data is stored locally on the user's device. Users are able to export their tournament standings and match statistics to backup anything that they may wish to have for external use. No data is shared externally or stored outside of the app unless the user export their information - all that is recorded regarding user activity is page hits.
 
+### JSON Export for Statistics
+
+This fork includes **JSON export** compatible with the [MTG Commander Ecosystem](https://github.com/dastuta/mtg-commander-ecosystem). Export your games in JSON format and use compatible statistics tools to analyze your gameplay data.
+
 ### Screenshots
 
 > as of March 12, 2025

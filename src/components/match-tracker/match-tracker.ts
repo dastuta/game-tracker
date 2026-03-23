@@ -412,6 +412,79 @@ export class MatchTracker extends LitElement {
     document.body.removeChild(link); // Clean up
   }
 
+  private exportToJSON() {
+    const games = this.matchResults.map((result, index) => {
+      const players = [
+        { id: 'player-1', name: result.player1Handle, seat: 1 },
+        { id: 'player-2', name: result.player2Handle, seat: 2 },
+        { id: 'player-3', name: result.player3Handle, seat: 3 },
+        { id: 'player-4', name: result.player4Handle, seat: 4 },
+      ];
+
+      const winnerIndex = ['win', 'win', 'win', 'win'].indexOf(result.player1Outcome) >= 0 
+        ? 0 
+        : ['win', 'win', 'win', 'win'].indexOf(result.player2Outcome) >= 0 
+          ? 1 
+          : ['win', 'win', 'win', 'win'].indexOf(result.player3Outcome) >= 0 
+            ? 2 
+            : ['win', 'win', 'win', 'win'].indexOf(result.player4Outcome) >= 0 
+              ? 3 
+              : null;
+
+      return {
+        id: `game-${Date.now()}-${index}`,
+        version: '1.0.0',
+        type: 'game',
+        createdAt: new Date().toISOString(),
+        meta: {
+          format: 'commander',
+          date: new Date().toISOString().split('T')[0],
+          winningPlayerId: winnerIndex !== null ? players[winnerIndex].id : null,
+          winningReason: winnerIndex !== null ? 'last_standing' : null,
+        },
+        players: players.map((p, i) => ({
+          ...p,
+          commander: null,
+          isWinner: i === winnerIndex,
+        })),
+        finalState: {
+          life: {
+            'player-1': result.player1LifeTracker,
+            'player-2': result.player2LifeTracker,
+            'player-3': result.player3LifeTracker,
+            'player-4': result.player4LifeTracker,
+          },
+          poison: {},
+          commanderDamage: {},
+        },
+        defeatedPlayers: players
+          .map((p, i) => {
+            const outcome = [result.player1Outcome, result.player2Outcome, result.player3Outcome, result.player4Outcome][i];
+            return outcome === 'loss' ? { playerId: p.id, playerName: p.name, reason: 'life' } : null;
+          })
+          .filter(Boolean),
+      };
+    });
+
+    const exportData = {
+      version: '1.0.0',
+      type: 'batch',
+      exportedAt: new Date().toISOString(),
+      count: games.length,
+      games: games,
+    };
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'mtg-commander-games.json';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
   private convertArrayOfObjectsToCSV(arr: any[]) {
     if (!arr || arr.length === 0) {
       return "";
@@ -691,6 +764,10 @@ export class MatchTracker extends LitElement {
                 <sl-button variant="success" pill @click=${this.exportToCSV}>
                   <sl-icon name="file-earmark-excel-fill" slot="prefix"></sl-icon>
                   Export to CSV
+                </sl-button>
+                <sl-button variant="primary" pill @click=${this.exportToJSON}>
+                  <sl-icon name="file-earmark-code-fill" slot="prefix"></sl-icon>
+                  Export to JSON
                 </sl-button>
                 <sl-button variant="danger" pill @click=${this.resetWithAlert}>
                   <sl-icon name="x-square-fill" slot="prefix"></sl-icon>
